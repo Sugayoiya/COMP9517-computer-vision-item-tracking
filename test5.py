@@ -2,13 +2,14 @@ import numpy as np
 import cv2,imutils as im
 import sys,test
 
-suft = test.image_feature_detector(feat_type=0)
+# suft = test.image_feature_detector(feat_type=0)
+suft = cv2.xfeatures2d.SIFT_create()
 
-def get_kp_des(frame,mask):
-    return suft.detector.detectAndCompute(frame, mask)
+# def get_kp_des(frame,mask):
+#     return suft.detector.detectAndCompute(frame, mask)
 
-def draw_kp(frame,kp):
-    return cv2.drawKeypoints(frame,kp,None,(0,0,255),4)
+# def draw_kp(frame,kp):
+#     return cv2.drawKeypoints(frame,kp,None,(0,0,255),4)
 
 video = cv2.VideoCapture('1.mp4')
 
@@ -29,7 +30,7 @@ box = (205,230,83,80)
 # face area [y1:y2, x1:x2]
 face = frame[230:310,205:288]
 
-kp2,des2 = suft.detector.detectAndCompute(face,None)
+kp2,des2 = suft.detectAndCompute(face,None)
 img2 = cv2.drawKeypoints(face,kp2,None,(0,0,255),4)
 
 while True:
@@ -40,7 +41,7 @@ while True:
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  
     # set timer  
     timer = cv2.getTickCount()
-    kp1, des1 = suft.detector.detectAndCompute(frame, None)
+    kp1, des1 = suft.detectAndCompute(frame, None)
     img1 = cv2.drawKeypoints(frame,kp1,None,(0,0,255),4)
 
     bf = cv2.BFMatcher()
