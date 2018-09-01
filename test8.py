@@ -38,16 +38,66 @@ def knnmatch(bf,des1,des2,k=2):
         matches = bf.knnMatch(des1,des2,k)
     return matches
 
-def noisyleaveout(good):
-    pass
+def noisyleaveout(good,gray,kp1,kp2,box,img,colors):
+    if len(good)>0:
+        blank = np.zeros(gray.shape)
+        no_noisy_good = []
+        for i in good:
+            (y1,x1) = kp1[i[0].queryIdx].pt
+            (y2,x2) = kp2[i[0].trainIdx].pt
+            blank[int(x1),int(y1)] = 255
+        cv2.imshow('kp binary img',blank)
+        # box filter
+        # print(box)
+        filtimg = cv2.boxFilter(blank,-1,(int(box[2]),int(box[3])))
+        filtimg = cv2.boxFilter(filtimg,-1,(int(box[2]*2),int(box[3]*2)))
+        cv2.imshow('filted img',filtimg)
+        # find the highest density kp in the img 
+        # (the value is the biggest at that point after filting)
+        min,max,min_loc,max_loc = cv2.minMaxLoc(filtimg)
+        for i in good:
+            (x1,y1) = kp1[i[0].queryIdx].pt
+            # remove not good enough keypoint in drawing bound box 
+            # not drawkeypoint()
+            if int(abs(x1-max_loc[0]))<= box[2] or int(abs(y1-max_loc[1]))<= box[3]:
+                no_noisy_good.append(i)
+        
+        lst = []
+        if len(no_noisy_good)>0:
+            for i in no_noisy_good:
+                # tracking
+                img1_idx = i[0].queryIdx
+                img2_idx = i[0].trainIdx
+                # print(good,'\n',good[0][0].queryIdx,good[0][0].trainIdx)
+                # break
+                (x1,y1) = kp1[img1_idx].pt
+                (x2,y2) = kp2[img2_idx].pt
+                # print((x1,y1),(x2,y2))
+
+                # rectangle position
+                pt1 = (int(x1)-int(x2),int(y1)-int(y2))
+                pt2 = (int(pt1[0]+box[2]),int(pt1[1]+box[3]))
+                lst.append((pt1,pt2))
+                # print('pt1:',pt1,'pt2:',pt2)
+            # print(Counter(lst))
+            pt1,pt2 = Counter(lst).most_common(1)[0][0]
+            colors = tuple(list(colors))
+            # print(colors,type(colors),type((255,0,0)),type(colors[1]))
+            colors = (int(colors[0]),int(colors[1]),int(colors[2]))
+            cv2.rectangle(img,pt1,pt2,colors,2,1)
+    else:
+        # tracking failure
+        cv2.putText(img3, "detected failure",(100,20),cv2.FONT_ITALIC,0.75,(50,170,50),2)
+
 
 if __name__ == '__main__':
     print('usage: python3 thisfile.py videofile box1 box2 box3 ...')
-    print('example: python3 test8.py Video_sample_1.mp4 "537,50,40,175" "244,74,50,60" "353,312,215,32"')
+    print('example: python3 test8.py Video_sample_1.mp4 "537,50,40,172" "244,74,50,60" "353,312,215,32"')
     # print(len(sys.argv))
 
     # surf detector
-    surf = cv2.xfeatures2d.SURF_create()
+    surf = cv2.xfeatures2d.SURF_create(25)
+    # surf = cv2.xfeatures2d.SIFT_create()
 
     # video file name
     videofile = sys.argv[1]
@@ -60,6 +110,12 @@ if __name__ == '__main__':
         box.append(temp)
     # print(videofile,box,len(box),box_size)
 
+    # generate different colors
+    labels = np.arange(box_size)+1
+    label_hue = np.uint8(179*labels/np.max(labels))
+    blank_ch = 255*np.ones_like(label_hue)
+    colors = cv2.merge([label_hue, blank_ch, blank_ch])
+    colors = cv2.cvtColor(colors, cv2.COLOR_HSV2BGR)
     # open video
     video = cv2.VideoCapture(videofile)
 
@@ -108,7 +164,7 @@ if __name__ == '__main__':
 
         bf = cv2.BFMatcher()
         matches = knnmatch(bf,des1,des,k=2)
-        print(type(matches))
+        # print(type(matches))
         good = []
         for i in matches:
             temp = []
@@ -137,9 +193,23 @@ if __name__ == '__main__':
         for i in range(1,len(boundbox)):
             img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
                     ,None,flags=2)
-        cv2.imshow('img3',img3)
-        cv2.waitKey(0)
-        break
+        # cv2.imshow('img3',img3)
+        # cv2.waitKey(0)
 
         # calculate frames per second (FPS)
         fps = cv2.getTickFrequency() / (cv2.getTickCount() - timer)
+
+        # tracking
+        for i in range(len(boundbox)):
+            noisyleaveout(good[i],gray,kp1,kp[i],box[i],img3,colors[i][0])
+        
+        # show FPS
+        cv2.putText(img3, "FPS:"+str(int(fps)),(100,50),cv2.FONT_ITALIC,0.75,(50,170,255),2)
+        cv2.imshow('match2',img3)
+
+        k = cv2.waitKey(1) & 0xff
+        if k == 27:
+            break
+    video.release()
+    cv2.waitKey(0)
+    cv2.destroyAllWindows() 

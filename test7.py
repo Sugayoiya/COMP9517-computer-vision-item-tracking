@@ -91,6 +91,7 @@ while True:
             (x1,y1) = kp1[i[0].queryIdx].pt
             # print(int(x1),int(y1))
             # print(max_loc)
+            print(abs(x1-max_loc[0]))
             if abs(x1-max_loc[0])<= box[2] or abs(y1-max_loc[1])<= box[3]:
                 no_noisy_good.append(i)
 
