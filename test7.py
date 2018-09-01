@@ -33,8 +33,9 @@ gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
 # bound box = (x, y, width, height)
 # box = (205,230,83,80)
-box = (537,50,40,175)
-# box = (244,74,50,60)
+# box = (537,50,40,175)
+box = (244,74,50,60)
+# box = (353,312,215,32)
 # face area [y1:y2, x1:x2]
 face = frame[box[1]:box[1]+box[3],box[0]:box[0]+box[2]]
 
