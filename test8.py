@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import sys,test
+import sys
 from collections import Counter
 
 def get_kp_des(surf,frame,mask=None):
