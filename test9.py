@@ -128,7 +128,7 @@ def noisyleaveout(good,gray,kp1,kp2,box):
 
 if __name__ == '__main__':
     print('usage: python3 thisfile.py videofile box1 box2 box3 ...')
-    print('example: python3 test8.py Video_sample_1.mp4 "537,50,40,172" "244,74,50,60" "353,310,215,40"')
+    print('example: python3 test9.py Video_sample_1.mp4 "537,50,40,172" "244,74,50,60" "353,310,215,40"')
     # print(len(sys.argv))
 
     # surf detector
