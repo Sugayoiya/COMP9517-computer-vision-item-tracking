@@ -18,10 +18,10 @@ def draw_kp(frame,kp):
     if isinstance(frame,list):
         img = []
         for i in range(len(frame)):
-            img_temp = cv2.drawKeypoints(frame[i],kp[i],None,(0,0,255),4)
+            img_temp = cv2.drawKeypoints(frame[i],kp[i],None,(0,0,255),2)
             img.append(img_temp)
     else:
-        img = cv2.drawKeypoints(frame,kp,None,(0,0,255),4)
+        img = cv2.drawKeypoints(frame,kp,None,(0,0,255),2)
     return img
 
 def calculate_box(box,firstframe):
@@ -72,29 +72,20 @@ def kalman_filter(boundbox):
     return kalman
 
 # leave out some noisy point
-def noisyleaveout(good,gray,kp1,kp2,box,xx,yy):
+def noisyleaveout(good,gray,kp1,kp2,box):
     if len(good)>0:
         blank = np.zeros(gray.shape)
-        # cv2.imshow('gray',gray)
-        # cv2.waitKey(0)
         no_noisy_good = []
         for i in good:
             (y1,x1) = kp1[i[0].queryIdx].pt
-            # (y2,x2) = kp2[i[0].trainIdx].pt
-            # print(blank.shape,gray.shape)
-            # print(x1,y1)
-            # cv2.waitKey(0)
-            # print(box)
-            if y1>= xx-2*box[2] and y1<= xx+2*box[2] and x1>= yy-2*box[3] and x1<= yy+2*box[3]:
-                print('jugde:',x1,y1)
-                blank[int(x1),int(y1)] = 255
-            # blank[int(x1),int(y1)] = 255
-        cv2.imshow('kp binary img',blank)
+            (y2,x2) = kp2[i[0].trainIdx].pt
+            blank[int(x1),int(y1)] = 255
+        # cv2.imshow('kp binary img',blank)
         # box filter
         # print(box)
         filtimg = cv2.boxFilter(blank,-1,(int(box[2]),int(box[3])))
-        # filtimg = cv2.boxFilter(filtimg,-1,(int(box[2]*2),int(box[3]*2)))
-        cv2.imshow('filted img',filtimg)
+        filtimg = cv2.boxFilter(filtimg,-1,(int(box[2]*2),int(box[3]*2)))
+        # cv2.imshow('filted img',filtimg)
         # find the highest density kp in the img 
         # (the value is the biggest at that point after filting)
         min,max,min_loc,max_loc = cv2.minMaxLoc(filtimg)
@@ -129,8 +120,6 @@ def noisyleaveout(good,gray,kp1,kp2,box,xx,yy):
             # colors = (int(colors[0]),int(colors[1]),int(colors[2]))
             # cv2.rectangle(img,pt1,pt2,colors,2,1)
             return pt1,pt2
-        else:
-            return 0,0
     else:
         # tracking failure
         cv2.putText(img3, "detected failure",(100,20),cv2.FONT_ITALIC,0.75,(50,170,50),2)
@@ -185,11 +174,13 @@ if __name__ == '__main__':
         sys.exit()
     # size of frame(RGB)
     size = frame.shape
-    cv2.imshow('1st frame',frame)
-    cv2.waitKey(0)
+    # cv2.imshow('1st frame',frame)
+    # cv2.waitKey(0)
 
     # change to gray 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    # cv2.imshow('gray frame',gray)
+    # cv2.waitKey(0)
     
     boundbox_color = calculate_box(box,frame)
     boundbox = calculate_box(box,gray)
@@ -202,12 +193,34 @@ if __name__ == '__main__':
     kp,des = get_kp_des(surf,boundbox)
     # keypoint img list type
     img = draw_kp(boundbox,kp)
-    # for i in img:
-    #     cv2.imshow('a',i)
-    #     cv2.waitKey(0)
 
-    flag = 0
-    x,y = 0,0
+    # show the first frame keypoint
+    display = cv2.cvtColor(gray,cv2.COLOR_GRAY2BGR)
+    for i in range(len(img)):
+        display[box[i][1]:box[i][1]+box[i][3],box[i][0]:box[i][0]+box[i][2]] = img[i]
+    cv2.imshow('1',display)
+    cv2.waitKey(0)
+
+    # draw initial keypoint matches on colored frame
+    kp1, des1 = surf.detectAndCompute(gray,None)
+    bf = cv2.BFMatcher()
+    matches = knnmatch(bf,des1,des,k=2)
+    # print(type(matches))
+    good = []
+    for i in matches:
+        temp = []
+        for m,n in i:
+            if m.distance < 0.45*n.distance:
+                temp.append([m])
+        good.append(temp)
+
+    img3 = cv2.drawMatchesKnn(frame,kp1,boundbox_color[0],kp[0],good[0]\
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
 
     while True:
         # read frame
@@ -227,19 +240,16 @@ if __name__ == '__main__':
         for i in matches:
             temp = []
             for m,n in i:
-                if m.distance < 0.8*n.distance:
+                if m.distance < 0.45*n.distance:
                     temp.append([m])
             good.append(temp)
-        
-        # print(good)
-        # print(good[0])
 
         # kalman prediction
-        # prediction = []
-        # for i in kalman:
-        #     a = i.predict()
-        #     # print(i.predict(),type(a))
-        #     prediction.append(a)
+        prediction = []
+        for i in kalman:
+            a = i.predict()
+            # print(i.predict(),type(a))
+            prediction.append(a)
 
         # img3 = cv2.drawMatchesKnn(frame,kp1,boundbox[0],kp[0],good[0]\
         #             ,None,flags= 2)
@@ -269,45 +279,18 @@ if __name__ == '__main__':
 
         # tracking (get next x,y)
         for i in range(len(boundbox)):
-            if flag == 0:
-                # print('mmmmm',box[i][0],box[i][1])
-                x,y = noisyleaveout(good[i],gray,kp1,kp[i],box[i],box[i][0],box[i][1])
-                flag = 1
-            else:
-                x,y = noisyleaveout(good[i],gray,kp1,kp[i],box[i],x[0],x[1])
-            cv2.waitKey(0)
-            prediction = kalman[i].predict()
-            # print(i,x,y,'\n',prediction)
-            if x!=0 and y!=0:              
-                if abs(x[0]+int(box[i][2]/2)-np.int32(prediction[0])) <= 50 or abs(x[1]+int(box[i][3]/2)-np.int32(prediction[0])) <= 50:
-                    # print(box,x,y,type(x),type(y))
-                    measurement = (x[0]+int(box[i][2]/2),x[1]+int(box[i][3]/2))
-                    posterior = kalman[i].correct(measurement)
-                    # print(prediction)
-                    # print("posterior:",np.int32(posterior[0]),np.int32(posterior[1]))
-                    # print("prediction:",np.int32(prediction[0]),np.int32(prediction[1]))
-                    # draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),getcolor(colors,i),3)
-                    x = (np.int32(posterior[0])-int(box[i][2]/2),np.int32(posterior[1])-int(box[i][3]/2))
-                    y = (np.int32(posterior[0])+int(box[i][2]/2),np.int32(posterior[1])+int(box[i][3]/2))
-                    draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),(255,255,255),3)
-                    cv2.rectangle(img3,x,y,getcolor(colors,i),2,1)
-                else:
-                    x = (np.int32(prediction[0])-int(box[i][2]/2),np.int32(prediction[1])-int(box[i][3]/2))
-                    y = (np.int32(prediction[0])+int(box[i][2]/2),np.int32(prediction[1])+int(box[i][3]/2))
-                    draw_cross(img3,(np.int32(prediction[0]),np.int32(prediction[1])),(255,255,255),3)
-                    cv2.rectangle(img3,x,y,getcolor(colors,i),2,1)
-            else:
-                x = (np.int32(prediction[0])-int(box[i][2]/2),np.int32(prediction[1])-int(box[i][3]/2))
-                y = (np.int32(prediction[0])+int(box[i][2]/2),np.int32(prediction[1])+int(box[i][3]/2))
-                draw_cross(img3,(np.int32(prediction[0]),np.int32(prediction[1])),(255,255,255),3)
+            x,y = noisyleaveout(good[i],gray,kp1,kp[i],box[i])
+            if x!=0 and y!=0:
+                # print(box,x,y,type(x),type(y))
+                measurement = (x[0]+int(box[i][2]/2),x[1]+int(box[i][3]/2))
+                posterior = kalman[i].correct(measurement)
+                # draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),getcolor(colors,i),3)
+                draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),(255,255,255),3)
                 cv2.rectangle(img3,x,y,getcolor(colors,i),2,1)
-
-
         
         # show FPS
         cv2.putText(img3, "FPS:"+str(int(fps)),(100,50),cv2.FONT_ITALIC,0.75,(50,170,255),2)
-        cv2.imshow('match2',img3)
-        
+        cv2.imshow('match',img3)
 
         k = cv2.waitKey(1) & 0xff
         if k == 27:
