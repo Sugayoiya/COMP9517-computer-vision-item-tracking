@@ -128,7 +128,7 @@ def noisyleaveout(good,gray,kp1,kp2,box):
 
 if __name__ == '__main__':
     print('usage: python3 thisfile.py videofile box1 box2 box3 ...')
-    print('example: python3 test9.py Video_sample_1.mp4 "537,50,40,172" "244,74,50,60" "353,310,215,40"')
+    print('example: python3 test10.py Video_sample_1.mp4 "537,50,40,172" "244,74,50,60" "353,310,215,40"')
     # print(len(sys.argv))
 
     # surf detector
@@ -142,11 +142,17 @@ if __name__ == '__main__':
     # bound box defined
     box_size = len(sys.argv) - 2
     box = []
+    trajectory = []
     for i in sys.argv[2:]:
         temp = i.split(',')
         temp = list(map(int,temp))
         box.append(temp)
+        x = temp[0]+temp[2]//2
+        y = temp[1]+temp[3]//2
+        # trajectory
+        trajectory.append([(x,y)])
     # print(videofile,box,len(box),box_size)
+    # print(trajectory)
 
     #kalman filter
     kalman = []
@@ -232,6 +238,8 @@ if __name__ == '__main__':
         # set timer
         timer = cv2.getTickCount()
         kp1, des1 = surf.detectAndCompute(gray,None)
+        anykp = draw_kp(frame,kp1)
+        cv2.imshow('any frame keypoint',anykp)
 
         bf = cv2.BFMatcher()
         matches = knnmatch(bf,des1,des,k=2)
@@ -287,6 +295,12 @@ if __name__ == '__main__':
                 # draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),getcolor(colors,i),3)
                 draw_cross(img3,(np.int32(posterior[0]),np.int32(posterior[1])),(255,255,255),3)
                 cv2.rectangle(img3,x,y,getcolor(colors,i),2,1)
+                trajectory[i].append((np.int32(posterior[0]),np.int32(posterior[1])))
+            
+            # draw trajectory
+            for p in trajectory:
+                for j in range(len(p)-1):
+                    cv2.line(img3,p[j],p[j+1],getcolor(colors,i))
         
         # show FPS
         cv2.putText(img3, "FPS:"+str(int(fps)),(100,50),cv2.FONT_ITALIC,0.75,(50,170,255),2)
