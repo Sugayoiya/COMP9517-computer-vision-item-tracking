@@ -1,4 +1,10 @@
-# comp9517 project part1 report
+#               <center>comp9517 project part1 report</center>
+
+### student name: hang zhang   
+
+### student id: z5153042
+
+
 
 For this part of the project, we need input at least 2 arguments to execute python file. 
 
@@ -36,3 +42,16 @@ Finally, when read the end of the video, stop and release the video.
 
 
 
+
+
+
+
+references: 
+
+https://www.learnopencv.com/object-tracking-using-opencv-cpp-python/
+
+https://docs.opencv.org/3.2.0/dd/d6a/classcv_1_1KalmanFilter.html#ac0799f0611baee9e7e558f016e4a7b40
+
+https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_matcher/py_matcher.html
+
+https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_feature2d/py_surf_intro/py_surf_intro.html

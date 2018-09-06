@@ -219,12 +219,60 @@ if __name__ == '__main__':
             if m.distance < 0.45*n.distance:
                 temp.append([m])
         good.append(temp)
-
-    img3 = cv2.drawMatchesKnn(frame,kp1,boundbox_color[0],kp[0],good[0]\
                 ,None,flags= 2,matchColor = getcolor(colors,0))      
     for i in range(1,len(boundbox)):
         img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
                 ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:
+
+    img3 = cv2.drawMatche
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:ood[0]\
+                ,None,fla
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:    
+    for i in range(1,len(
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:
+        img3 = cv2.drawMa
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:],good[i]\
+                ,None,fla
+                ,None,flags= 2,matchColor = getcolor(colors,0))      
+    for i in range(1,len(boundbox)):
+        img3 = cv2.drawMatchesKnn(img3,kp1,boundbox_color[i],kp[i],good[i]\
+                ,None,flags= 2,matchColor = getcolor(colors,i))
+    cv2.imshow('initial keypoint matches',img3)
+    cv2.waitKey(0)
+
+    while True:
     cv2.imshow('initial keypoint matches',img3)
     cv2.waitKey(0)
 
