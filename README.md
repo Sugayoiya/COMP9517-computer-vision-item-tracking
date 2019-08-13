@@ -1,4 +1,4 @@
-# computer-vision---item-tracking
+# COMP9517-computer-vision-item-tracking
 
 usage: `python3 thisfile.py videofile box1 box2 box3 ...`
 
